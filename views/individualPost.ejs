@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE-edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.classless.min.css"
+  />
+  <link href="/css/style.css" rel="stylesheet" />
+  <title>View Post</title>
+</head>
+<body>
+  <main>
+    <div class="authOptions">
+      <h1>View Post</h1>
+      <a role="button" href="/posts">Home</a>
+    </div>
+    <div class="post">
+      <h2>Title: <%= post.title %></h2>
+      <p>Description: <%= post.description %></p>
+      <p>Subgroup: <%= post.subgroup %></p>
+      <p>Creator: <%= post.creator.uname %></p>
+      <p>Time: <%= new Date(post.timestamp).toLocaleString() %></p>
+
+      <h3>Comments:</h3>
+      <% post.comments.forEach(comment => { %>
+        <div class="comment" >
+          <p>
+            Comment by
+            <% if (user && comment.creator.id === user.id) { %>
+              <span>: You</span>
+            <% } else { %>
+              <%= comment.creator.uname %> at <%= new Date(comment.timestamp).toLocaleString() %>
+            <% } %>
+          </p>
+          <p><%= comment.description %></p>
+          <% if (user && comment.creator.id === user.id) { %>
+            <form method="post" action="/posts/delete-comment/<%= comment.id %>">
+              <button type="submit" style="margin-left: 10px; width: 20%;">Delete comment</button>
+            </form>
+          <% } %>
+        </div>
+      <% }) %>
+      <% if (user) { %>
+        <h3>Add a Comment:</h3>
+        <form method="post" action="/posts/comment-create/<%= post.id %>">
+          <div>
+            <textarea type="text" id="comment" name="comment" required rows="4"></textarea>
+            <button type="submit">Add Comment</button>
+          </div>
+        </form>
+      <% } else { %>
+        <p style="color: blue;"><a href="/auth/login">Log in to comment</a></p>
+      <% } %>
+
+     
+<div class="votes">
+  <h3>Votes:</h3>
+  <% if (user) { %>
+    <div>
+      <p id="totalVotes">Total votes: <%= post.upvotesCount - post.downvotesCount %></p>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button style="margin-right: 10px;"
+        id="upvoteButton"
+        onclick="vote('upvote', '<%= post.id %>')"
+        data-user-vote="<%= post.userVote %>"
+        <%= post.userVote === 'upvote' ? 'style="background-color: rgb(4, 160, 4);"' : '' %>
+        data-post-id="<%= post.id %>"
+      >
+        &#128077; Upvotes <%= post.upvotesCount %>
+      </button>
+      <button
+        id="downvoteButton"
+        onclick="vote('downvote', '<%= post.id %>')"
+        data-user-vote="<%= post.userVote %>"
+        <%= post.userVote === 'downvote' ? 'style="background-color: red;"' : '' %>
+        data-post-id="<%= post.id %>"
+      >
+        &#128078; Downvotes <%= post.downvotesCount %>
+      </button>
+    </div>
+  <% } else { %>
+    <p id="totalVotes">Total votes: <%= post.upvotesCount - post.downvotesCount %></p>
+    <p style="color: blue;"><a href="/auth/login">Log in to vote</a></p>
+  <% } %>
+    <% if (user && post.creator.id === user.id) { %>
+          <form method="get" action="/posts/edit/<%= post.id %>">
+            <button type="submit" id="editButton">Edit post</button>
+          </form>
+        <% } %>
+        <% if (user && post.creator.id === user.id) { %>
+          <form method="get" action="/posts/deleteconfirm/<%= post.id %>">
+            <button id="deleteButton" type="submit">Delete post</button>
+          </form>
+        <% } %>
+</div>
+    </div>
+  </main>
+  <script type="module">
+    async function vote(action, postId) {
+  const upvoteButton = document.getElementById('upvoteButton');
+  const downvoteButton = document.getElementById('downvoteButton');
+  const totalVotesElement = document.getElementById('totalVotes');
+
+  try {
+    const response = await fetch(`/posts/vote/${postId}/${action}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userVote: upvoteButton.dataset.userVote }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      totalVotesElement.innerHTML = `Total votes: ${data.upvotesCount - data.downvotesCount}`;
+      upvoteButton.dataset.userVote = data.userVote;
+      upvoteButton.style.backgroundColor = data.userVote === 'upvote' ? 'green' : '';
+      upvoteButton.innerHTML = `&#128077; Upvotes ${data.upvotesCount}`;
+      downvoteButton.dataset.userVote = data.userVote === 'downvote' ? 'downvote' : '';
+      downvoteButton.style.backgroundColor = data.userVote === 'downvote' ? 'red' : '';
+      downvoteButton.innerHTML = `&#128078; Downvotes ${data.downvotesCount}`;
+    } else {
+      console.error('Failed:', data.message);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+    window.vote = vote; 
+  </script>
+</body>
+</html>

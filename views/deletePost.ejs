@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE-edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.classless.min.css"
+    />
+    <link href="/css/style.css" rel="stylesheet" />
+    <title>View Post</title>
+  </head>
+  <body>
+    <main>
+      <div class="authOptions">
+        <h1>View Post</h1>
+        <a role="button" href="/posts">Home</a>
+      </div>
+      <form method="post" action="/posts/delete/<%= post.id %>">
+        <div class="post">
+          <h2>Title: <%= post.title %></h2>
+          <p>Description: <%= post.description %></p>
+          <p>Subgroup: <%= post.subgroup %></p>
+          <p>Creator: <%= post.creator.uname %></p>
+          <p>Time: <%= new Date(post.timestamp).toLocaleString() %></p>
+          <h3>Comments:</h3>
+          <% post.comments.forEach(comment => { %>
+          <div class="comment">
+            <p>
+              Comment by <%= comment.creator.uname %> at <%= new
+              Date(comment.timestamp).toLocaleString() %>
+            </p>
+            <p><%= comment.description %></p>
+          </div>
+          <% }) %>
+
+          <div class="votes">
+            <h3>Votes:</h3>
+            <p>Upvotes: <%= post.upvotesCount %></p>
+            <p>Downvotes: <%= post.downvotesCount %></p>
+            <% if (user && post.creator.id === user.id) { %>
+            <button type="submit" id="deleteButton">Delete post</button>
+            <% } %>
+          </div>
+        </div>
+      </form>
+    </main>
+  </body>
+</html>
